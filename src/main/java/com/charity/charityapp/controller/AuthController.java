@@ -5,30 +5,35 @@ import com.charity.charityapp.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.*;
 
 @Controller
 @RequiredArgsConstructor
+@RequestMapping("/auth")
 public class AuthController {
+
     private final UserService userService;
 
-    @GetMapping("/auth/login")
-    public String login() {
+    @GetMapping("/login")  // Changed from "auth/login" to "/login"
+    public String loginPage(@RequestParam(required=false) boolean error,
+                            @RequestParam(required=false) boolean logout,
+                            @RequestParam(required=false) boolean registered,
+                            Model model) {
+        model.addAttribute("loginError", error);
+        model.addAttribute("loggedOut", logout);
+        model.addAttribute("registered", registered);
         return "auth/login";
     }
 
-    @GetMapping("/auth/register")
-    public String registerForm(Model model) {
+    @GetMapping("/register")  // Changed from "auth/register" to "/register"
+    public String registerPage(Model model) {
         model.addAttribute("userDto", new UserDto());
         return "auth/register";
     }
 
-    @PostMapping("/auth/register")
+    @PostMapping("/register")
     public String processRegistration(@ModelAttribute UserDto userDto) {
         userService.create(userDto);
-        return "redirect:/auth/login?registered";
+        return "redirect:/auth/login?registered=true";
     }
 }
-

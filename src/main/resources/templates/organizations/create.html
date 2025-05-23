@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="fragments/header :: head('Create Organization')"/>
+<div class="py-4">
+  <h2>Create Organization</h2>
+  <form th:action="@{/organizations/create}" th:object="${organizationDto}" method="post">
+    <div class="mb-3">
+      <label class="form-label">Name</label>
+      <input th:field="*{name}" class="form-control" required/>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Status</label>
+      <select th:field="*{status}" class="form-select" required>
+        <option th:each="s : ${T(com.charity.charityapp.enums.OrganizationStatus).values()}"
+                th:value="${s}" th:text="${s}"/>
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Save</button>
+  </form>
+</div>
+<th:block th:replace="fragments/footer :: footer"/>

@@ -1,3 +1,4 @@
+// src/main/java/com/charity/charityapp/config/AdminSeeder.java
 package com.charity.charityapp.config;
 
 import com.charity.charityapp.enums.Role;
@@ -19,7 +20,7 @@ public class AdminSeeder implements CommandLineRunner {
     }
 
     @Override
-    public void run(String... args) throws Exception {
+    public void run(String... args) {
         String adminEmail = "admin@charityapp.com";
         if (!userRepo.existsByEmail(adminEmail)) {
             User admin = new User();

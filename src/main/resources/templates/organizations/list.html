@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
-<head th:replace="fragments/header :: commonHead('Manage Users')"></head>
+<head th:replace="fragments/header :: commonHead('Organizations')"></head>
 <body class="bg-light">
 <nav class="navbar navbar-light bg-white shadow-sm mb-4">
     <div class="container">
         <a class="navbar-brand" th:href="@{/}">CharityApp</a>
         <ul class="navbar-nav ms-auto d-flex flex-row">
             <li class="nav-item me-3">
-                <a class="nav-link" th:text="${#authentication.name}">Admin</a>
+                <a class="nav-link" th:text="${#authentication.name}">User</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" th:href="@{/logout}">Logout</a>
@@ -17,34 +17,32 @@
 </nav>
 
 <div class="container py-4">
-    <h2>All Users</h2>
-    <a class="btn btn-primary mb-3" th:href="@{/admin/users/create}">New User</a>
+    <h2>Organizations</h2>
+    <a class="btn btn-success mb-3" th:href="@{/organizations/create}">New Organization</a>
     <table class="table table-hover">
         <thead>
         <tr>
             <th>ID</th>
-            <th>First Name</th>
-            <th>Last Name</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Phone</th>
+            <th>Name</th>
+            <th>Contact Email</th>
+            <th>Address</th>
+            <th>Status</th>
             <th>Actions</th>
         </tr>
         </thead>
         <tbody>
-        <tr th:each="u : ${users}">
-            <td th:text="${u.id}">1</td>
-            <td th:text="${u.firstName}">Jane</td>
-            <td th:text="${u.lastName}">Doe</td>
-            <td th:text="${u.email}">jane@example.com</td>
-            <td th:text="${u.role}">USER</td>
-            <td th:text="${u.phone}">+212600000000</td>
+        <tr th:each="org : ${organizations}">
+            <td th:text="${org.id}">1</td>
+            <td th:text="${org.name}">Helping Hands</td>
+            <td th:text="${org.contactEmail}">info@help.org</td>
+            <td th:text="${org.address}">123 Elm St.</td>
+            <td th:text="${org.status}">ACTIVE</td>
             <td>
-                <a th:href="@{|/admin/users/edit/${u.id}|}"
+                <a th:href="@{|/organizations/edit/${org.id}|}"
                    class="btn btn-sm btn-secondary">Edit</a>
-                <a th:href="@{|/admin/users/delete/${u.id}|}"
+                <a th:href="@{|/organizations/delete/${org.id}|}"
                    class="btn btn-sm btn-danger"
-                   onclick="return confirm('Delete this user?');">Delete</a>
+                   onclick="return confirm('Delete this organization?');">Delete</a>
             </td>
         </tr>
         </tbody>

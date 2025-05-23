@@ -17,4 +17,9 @@ public class DonationDto {
     private String donorEmail;
     private LocalDateTime donatedAt;
     private Long charityActionId;
+
+    // Additional fields for better display
+    private String charityActionName;
+    private String organizationName;
+    private String status;
 }

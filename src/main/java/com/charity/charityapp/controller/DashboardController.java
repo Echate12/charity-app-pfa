@@ -1,44 +1,42 @@
 package com.charity.charityapp.controller;
 
 import com.charity.charityapp.dto.DonationDto;
-import com.charity.charityapp.service.CharityActionService;
 import com.charity.charityapp.service.DonationService;
-import com.charity.charityapp.service.OrganizationService;
 import com.charity.charityapp.service.UserService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Controller
-@RequiredArgsConstructor
 public class DashboardController {
 
-    private final CharityActionService actionService;
     private final DonationService donationService;
-    private final OrganizationService organizationService;
     private final UserService userService;
 
-    @GetMapping({"/", "/dashboard"})
-    public String dashboard(Model model) {
-        int totalActions       = actionService.getAll().size();
-        long totalDonations    = donationService.countAll();
-        int totalOrganizations = organizationService.getAll().size();
-        int totalUsers         = userService.getAll().size();
+    public DashboardController(DonationService donationService, UserService userService) {
+        this.donationService = donationService;
+        this.userService = userService;
+    }
 
-        List<DonationDto> recentDonations = donationService.getAll().stream()
-                .sorted((d1, d2) -> d2.getDonatedAt().compareTo(d1.getDonatedAt()))
-                .limit(5)
-                .toList();
+    @GetMapping("/dashboard")
+    public String userDashboard(Model model, Authentication authentication) {
+        // Get current user's email
+        String userEmail = authentication.getName();
 
-        model.addAttribute("totalActions", totalActions);
-        model.addAttribute("totalDonations", totalDonations);
-        model.addAttribute("totalOrganizations", totalOrganizations);
-        model.addAttribute("totalUsers", totalUsers);
-        model.addAttribute("recentDonations", recentDonations);
+        // Get user's donations (you'll need to implement this method in your service)
+        // For now, let's just get all donations and filter by user
+        List<DonationDto> userDonations = donationService.getAll().stream()
+                .filter(d -> d.getDonorEmail() != null && d.getDonorEmail().equals(userEmail))
+                .collect(Collectors.toList());
 
-        return "dashboard";
+        model.addAttribute("donations", userDonations);
+        model.addAttribute("totalDonations", userDonations.size());
+        model.addAttribute("userName", authentication.getName());
+
+        return "dashboard"; // This should point to your dashboard.html template
     }
 }

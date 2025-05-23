@@ -1,18 +1,19 @@
-// src/main/java/com/charity/charityapp/config/SecurityConfig.java
 package com.charity.charityapp.config;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
+@EnableMethodSecurity(prePostEnabled = true) // Enable @PreAuthorize
 public class SecurityConfig {
 
     @Bean
@@ -20,34 +21,53 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // src/main/java/com/charity/charityapp/config/SecurityConfig.java
+    @Bean
+    public AuthenticationSuccessHandler myAuthSuccessHandler() {
+        return (request, response, authentication) -> {
+            boolean isAdmin = authentication.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            String targetUrl = isAdmin ? "/admin/dashboard" : "/dashboard";
+            response.sendRedirect(request.getContextPath() + targetUrl);
+        };
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                // Configure authorization
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
-                        .requestMatchers("/auth/**", "/auth/login", "/auth/logout").permitAll()
+                        // Public endpoints
+                        .requestMatchers(HttpMethod.GET,
+                                "/", "/auth/login", "/auth/register",
+                                "/error", "/css/**", "/js/**", "/images/**"
+                        ).permitAll()
+                        .requestMatchers(HttpMethod.POST,
+                                "/auth/register"
+                        ).permitAll()
+                        // Admin endpoints
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        // All other endpoints require authentication
                         .anyRequest().authenticated()
                 )
-                .formLogin(login -> login
-                        // our custom login page:
+                // Configure form login
+                .formLogin(form -> form
                         .loginPage("/auth/login")
-                        // <— handle POSTs here too
                         .loginProcessingUrl("/auth/login")
-                        .defaultSuccessUrl("/dashboard", true)
-                        .failureUrl("/auth/login?error")
+                        .usernameParameter("username")
+                        .passwordParameter("password")
+                        .successHandler(myAuthSuccessHandler())
+                        .failureUrl("/auth/login?error=true")
                         .permitAll()
                 )
+                // Configure logout
                 .logout(logout -> logout
                         .logoutUrl("/auth/logout")
-                        .logoutSuccessUrl("/auth/login?logout")
+                        .logoutSuccessUrl("/auth/login?logout=true")
+                        .invalidateHttpSession(true)
+                        .deleteCookies("JSESSIONID")
                         .permitAll()
-                )
-                // CSRF and frame options as before
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**"))
-                .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
+                );
 
         return http.build();
     }
-
 }
