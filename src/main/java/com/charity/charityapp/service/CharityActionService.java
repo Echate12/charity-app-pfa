@@ -1,61 +1,63 @@
 package com.charity.charityapp.service;
 
 import com.charity.charityapp.dto.CharityActionDto;
-import com.charity.charityapp.enums.ActionCategory;
 import com.charity.charityapp.exceptions.ResourceNotFoundException;
 import com.charity.charityapp.model.CharityAction;
 import com.charity.charityapp.repository.CharityActionRepository;
-import lombok.AllArgsConstructor;
+import com.charity.charityapp.repository.OrganizationRepository;
+import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
-@AllArgsConstructor
 @Service
+@RequiredArgsConstructor
+@Transactional
 public class CharityActionService {
 
-    private final CharityActionRepository charityActionRepository;
-    private final ModelMapper modelMapper;
+    private final CharityActionRepository repo;
+    private final OrganizationRepository orgRepo;
+    private final ModelMapper mapper;
 
-    public List<CharityAction> findAllActions() {
-        return charityActionRepository.findAll();
+    @Transactional(readOnly = true)
+    public List<CharityActionDto> getAll() {
+        return repo.findAll().stream()
+                .map(action -> mapper.map(action, CharityActionDto.class))
+                .collect(Collectors.toList());
     }
 
-    public CharityAction findActionById(Long id) {
-        return charityActionRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("No action found with id: " + id));
+    @Transactional(readOnly = true)
+    public CharityActionDto getById(Long id) {
+        CharityAction action = repo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Action not found"));
+        return mapper.map(action, CharityActionDto.class);
     }
 
-    public List<CharityAction> findByCategory(ActionCategory category) {
-        return charityActionRepository.findAllByCategory(ActionCategory.valueOf(category.name()));
+    public CharityActionDto create(CharityActionDto dto) {
+        CharityAction action = mapper.map(dto, CharityAction.class);
+        action.setOrganization(orgRepo.findById(dto.getOrganizationId())
+                .orElseThrow(() -> new ResourceNotFoundException("Organization not found")));
+        CharityAction saved = repo.save(action);
+        return mapper.map(saved, CharityActionDto.class);
     }
 
-    public List<CharityAction> searchActions(String keyword, ActionCategory category) {
-        if (category != null) {
-            return charityActionRepository.findAllByTitleContainingIgnoreCaseAndCategory(keyword, category);
+    public CharityActionDto update(Long id, CharityActionDto dto) {
+        CharityAction existing = repo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Action not found"));
+        mapper.map(dto, existing);
+        existing.setOrganization(orgRepo.findById(dto.getOrganizationId())
+                .orElseThrow(() -> new ResourceNotFoundException("Organization not found")));
+        CharityAction updated = repo.save(existing);
+        return mapper.map(updated, CharityActionDto.class);
+    }
+
+    public void delete(Long id) {
+        if (!repo.existsById(id)) {
+            throw new ResourceNotFoundException("Action not found");
         }
-        return charityActionRepository.findAllByTitleContainingIgnoreCase(keyword);
-    }
-
-    public CharityAction createAction(CharityActionDto actionDto) {
-
-        CharityAction action = modelMapper.map(actionDto, CharityAction.class);
-        action.setOrganization(organization);
-        action.setAmountRaised(0.0); // Initialize with 0 donations
-        action.setCreatedAt(LocalDateTime.now());
-        return charityActionRepository.save(action);
-    }
-
-    public void updateAction(Long id, CharityActionDto actionDto) {
-        CharityAction action = findActionById(id);
-        action.setCategory(actionDto.getCategory());
-        action.setTitle(actionDto.getTitle());
-        action.setDescription(actionDto.getDescription());
-        action.setAmountRaised(actionDto.getAmountRaised());
-        action.setFundingGoal(actionDto.getFundingGoal());
-        charityActionRepository.save(action);
-    }
-
-    public void deleteAction(Long id) {
-        charityActionRepository.deleteById(id);
+        repo.deleteById(id);
     }
 }

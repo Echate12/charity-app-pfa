@@ -1,33 +1,26 @@
 package com.charity.charityapp.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "donations")
 @Getter
 @Setter
-@AllArgsConstructor
-@NoArgsConstructor
 public class Donation {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private double amount;
-    private LocalDateTime donationDate;
+    private BigDecimal amount;
+    private String donorEmail;
+    private LocalDateTime donatedAt;
 
-    @ManyToOne
-    @JoinColumn(name = "donor_id")
-    private User donor;
-
-    @ManyToOne
-    @JoinColumn(name = "action_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "charity_action_id")
     private CharityAction charityAction;
+
 
 }

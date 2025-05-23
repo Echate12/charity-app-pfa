@@ -1,11 +1,11 @@
 package com.charity.charityapp.exceptions;
 
-import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
-@AllArgsConstructor
+@ResponseStatus(HttpStatus.FORBIDDEN)
 public class UnauthorizedAccessException extends RuntimeException {
     public UnauthorizedAccessException(String message) {
         super(message);
     }
-
 }
