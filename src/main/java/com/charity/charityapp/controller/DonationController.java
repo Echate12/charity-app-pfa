@@ -6,28 +6,23 @@ import com.charity.charityapp.service.DonationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.*;
 
 @Controller
 @RequestMapping("/donations")
 @RequiredArgsConstructor
 public class DonationController {
-    private final DonationService service;
+    private final DonationService donationService;
     private final CharityActionService charityActionService;
 
+    // 1) LIST all donations
     @GetMapping
     public String list(Model model) {
-        List<DonationDto> donations = service.getAll();
-        model.addAttribute("donations", donations);
+        model.addAttribute("donations", donationService.getAll());
         return "donations/index";
     }
 
+    // 2) SHOW the "create" form
     @GetMapping("/create")
     public String createForm(Model model) {
         model.addAttribute("donation", new DonationDto());
@@ -35,28 +30,34 @@ public class DonationController {
         return "donations/create";
     }
 
-    @PostMapping
-    public String create(@ModelAttribute DonationDto dto) {
-        service.create(dto);
+    // 3) HANDLE the "create" POST
+    @PostMapping("/create")
+    public String create(@ModelAttribute("donation") DonationDto dto) {
+        donationService.create(dto);
         return "redirect:/donations";
     }
 
+    // 4) SHOW the "edit" form
     @GetMapping("/edit/{id}")
     public String editForm(@PathVariable Long id, Model model) {
-        model.addAttribute("donation", service.getById(id));
+        DonationDto existing = donationService.getById(id);
+        model.addAttribute("donation", existing);
         model.addAttribute("charityActions", charityActionService.getAll());
-        return "donations/update";
+        return "donations/edit";
     }
 
+    // 5) HANDLE the "edit" POST
     @PostMapping("/edit/{id}")
-    public String update(@PathVariable Long id, @ModelAttribute DonationDto dto) {
-        service.update(id, dto);
+    public String update(@PathVariable Long id,
+                         @ModelAttribute("donation") DonationDto dto) {
+        donationService.update(id, dto);
         return "redirect:/donations";
     }
 
+    // 6) DELETE (via GET for simplicity)
     @GetMapping("/delete/{id}")
     public String delete(@PathVariable Long id) {
-        service.delete(id);
+        donationService.delete(id);
         return "redirect:/donations";
     }
 }

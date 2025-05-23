@@ -22,4 +22,8 @@ public class DonationDto {
     private String charityActionName;
     private String organizationName;
     private String status;
+    private Long actionId;
+
+    /** The amount (in USD) to donate */
+
 }

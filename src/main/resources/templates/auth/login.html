@@ -14,33 +14,45 @@
             <div class="card shadow-sm">
                 <div class="card-body p-4">
                     <h3 class="mb-4 text-center">Sign In</h3>
+
+                    <!-- Login form -->
                     <form th:action="@{/auth/login}" method="post">
                         <input type="hidden"
                                th:name="${_csrf.parameterName}"
                                th:value="${_csrf.token}"/>
+
                         <div class="mb-3">
                             <label for="username" class="form-label">Email</label>
                             <input id="username" name="username" type="email"
                                    class="form-control" required autofocus/>
                         </div>
+
                         <div class="mb-3">
                             <label for="password" class="form-label">Password</label>
                             <input id="password" name="password" type="password"
                                    class="form-control" required/>
                         </div>
-                        <div th:if="${loginError}" class="alert alert-danger">
+
+                        <!-- Show error if ?error is present -->
+                        <div th:if="${param.error}" class="alert alert-danger">
                             Invalid email or password.
                         </div>
-                        <div th:if="${loggedOut}" class="alert alert-info">
+
+                        <!-- Show info if ?logout is present -->
+                        <div th:if="${param.logout}" class="alert alert-info">
                             You’ve been logged out.
                         </div>
-                        <div th:if="${registered}" class="alert alert-success">
+
+                        <!-- Show success if you redirect with ?registered -->
+                        <div th:if="${param.registered}" class="alert alert-success">
                             Registration successful! Please sign in.
                         </div>
+
                         <button type="submit" class="btn btn-primary w-100">
                             Log In
                         </button>
                     </form>
+
                     <p class="mt-3 text-center">
                         <a th:href="@{/auth/register}">Create an account</a>
                     </p>
