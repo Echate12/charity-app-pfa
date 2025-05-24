@@ -27,6 +27,8 @@ public class AdminController {
     private final CharityActionService actionService;
     private final OrganizationService organizationService;
 
+
+
     // ----- Dashboard -----
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
@@ -61,45 +63,43 @@ public class AdminController {
 
     // ----- Organizations CRUD -----
 
-    /** List all organizations (admin view) */
     @GetMapping("/organizations")
     public String allOrganizations(Model model) {
-        List<OrganizationDto> orgs = organizationService.getAll();
-        model.addAttribute("organizations", orgs);
-        return "admin/organizations";  // src/main/resources/templates/admin/organizations.html
+        model.addAttribute("organizations", organizationService.getAll());
+        return "admin/organizations";           // templates/admin/organizations.html
     }
 
-    /** Show create form */
+    // Show create form
     @GetMapping("/organizations/create")
     public String showCreateOrganizationForm(Model model) {
         model.addAttribute("organization", new OrganizationDto());
-        return "admin/organizations/create";
+        return "admin/organization-create";     // templates/admin/organization-create.html
     }
 
-    /** Handle create submission */
+    // Handle create submission
     @PostMapping("/organizations/create")
-    public String createOrganization(@ModelAttribute OrganizationDto dto) {
+    public String createOrganization(@ModelAttribute("organization") OrganizationDto dto) {
         organizationService.create(dto);
         return "redirect:/admin/organizations";
     }
 
-    /** Show edit form */
+    // Show edit form
     @GetMapping("/organizations/edit/{id}")
     public String showEditOrganizationForm(@PathVariable Long id, Model model) {
         model.addAttribute("organization", organizationService.getById(id));
-        return "admin/organizations/edit";
+        return "admin/organization-edit";       // templates/admin/organization-edit.html
     }
 
-    /** Handle update submission */
+    // Handle update submission
     @PostMapping("/organizations/edit/{id}")
     public String updateOrganization(@PathVariable Long id,
-                                     @ModelAttribute OrganizationDto dto) {
+                                     @ModelAttribute("organization") OrganizationDto dto) {
         organizationService.update(id, dto);
         return "redirect:/admin/organizations";
     }
 
-    /** Delete an organization */
-    @GetMapping("/organizations/delete/{id}")
+    // Delete an organization
+    @PostMapping("/organizations/delete/{id}")
     public String deleteOrganization(@PathVariable Long id) {
         organizationService.delete(id);
         return "redirect:/admin/organizations";

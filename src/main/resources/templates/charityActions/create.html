@@ -1,42 +1,59 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Create Action</title>
+    <meta charset="UTF-8"/>
+    <title>Create Charity Action</title>
 </head>
 <body>
 
-<h1>Create a New Charity Action</h1>
+<h1>Create New Charity Action</h1>
 <form th:action="@{/actions/create}"
       th:object="${action}"
       method="post">
-    <input th:name="${_csrf.parameterName}"
-           th:value="${_csrf.token}"
-           type="hidden"/>
+
+    <input type="hidden"
+           th:name="${_csrf.parameterName}"
+           th:value="${_csrf.token}"/>
 
     <div>
         <label for="title">Title</label>
-        <input id="title" type="text" th:field="*{title}" required/>
+        <input id="title"
+               type="text"
+               th:field="*{title}"
+               required/>
     </div>
 
     <div>
         <label for="description">Description</label>
         <textarea id="description"
                   th:field="*{description}"
-                  rows="5"
+                  rows="4"
                   required></textarea>
     </div>
 
     <div>
         <label for="category">Category</label>
-        <select id="category" th:field="*{category}">
+        <select id="category"
+                th:field="*{category}">
             <option th:each="c : ${T(com.charity.charityapp.enums.ActionCategory).values()}"
                     th:value="${c}"
-                    th:text="${c}">CATEGORY</option>
+                    th:text="${c}"/>
+        </select>
+    </div>
+
+    <div>
+        <label for="org">Organization</label>
+        <select id="org"
+                th:field="*{organizationId}">
+            <option value="" disabled selected>Select an organization</option>
+            <option th:each="o : ${organizations}"
+                    th:value="${o.id}"
+                    th:text="${o.name}">Org Name</option>
         </select>
     </div>
 
     <button type="submit">Save</button>
+    <a th:href="@{/actions}">Cancel</a>
 </form>
 
 </body>
