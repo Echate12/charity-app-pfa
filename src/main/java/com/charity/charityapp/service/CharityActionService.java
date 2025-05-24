@@ -1,10 +1,13 @@
+// src/main/java/com/charity/charityapp/service/CharityActionService.java
 package com.charity.charityapp.service;
 
 import com.charity.charityapp.dto.CharityActionDto;
 import com.charity.charityapp.exceptions.ResourceNotFoundException;
 import com.charity.charityapp.model.CharityAction;
+import com.charity.charityapp.model.User;
 import com.charity.charityapp.repository.CharityActionRepository;
 import com.charity.charityapp.repository.OrganizationRepository;
+import com.charity.charityapp.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -20,12 +23,13 @@ public class CharityActionService {
 
     private final CharityActionRepository repo;
     private final OrganizationRepository orgRepo;
+    private final UserRepository userRepo;
     private final ModelMapper mapper;
 
     @Transactional(readOnly = true)
     public List<CharityActionDto> getAll() {
         return repo.findAll().stream()
-                .map(action -> mapper.map(action, CharityActionDto.class))
+                .map(a -> mapper.map(a, CharityActionDto.class))
                 .collect(Collectors.toList());
     }
 
@@ -59,5 +63,30 @@ public class CharityActionService {
             throw new ResourceNotFoundException("Action not found");
         }
         repo.deleteById(id);
+    }
+
+    @Transactional(readOnly = true)
+    public List<CharityActionDto> search(String keyword) {
+        return repo.findByTitleContainingIgnoreCase(keyword).stream()
+                .map(a -> mapper.map(a, CharityActionDto.class))
+                .collect(Collectors.toList());
+    }
+
+    public void follow(Long actionId, String userEmail) {
+        User user = userRepo.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        CharityAction action = repo.findById(actionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Action not found"));
+        user.getFollowedActions().add(action);
+        userRepo.save(user);
+    }
+
+    @Transactional(readOnly = true)
+    public List<CharityActionDto> getTracked(String userEmail) {
+        User user = userRepo.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return user.getFollowedActions().stream()
+                .map(a -> mapper.map(a, CharityActionDto.class))
+                .collect(Collectors.toList());
     }
 }

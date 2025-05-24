@@ -17,6 +17,7 @@ public class CharityActionDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    // ← NEW: link back to the owning organization
+    // link back to the owning organization
     private Long organizationId;
+    private String organizationName;
 }
