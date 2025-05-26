@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Donation Details</title>
+    <link rel="stylesheet" th:href="@{/css/admin.css}" />
+</head>
+<body>
+<div th:replace="fragments/admin-nav :: adminMenu"></div>
+
+<div class="container">
+    <h2>Donation Details</h2>
+    <div class="details-card">
+        <div class="detail-row">
+            <label>ID:</label>
+            <span th:text="${donation.id}">1</span>
+        </div>
+        <div class="detail-row">
+            <label>Donor Email:</label>
+            <span th:text="${donation.donorEmail}">donor@email.com</span>
+        </div>
+        <div class="detail-row">
+            <label>Amount:</label>
+            <span th:text="${donation.amount}">0.00</span>
+        </div>
+        <div class="detail-row">
+            <label>Date:</label>
+            <span th:text="${#temporals.format(donation.donatedAt, 'yyyy-MM-dd HH:mm')}">2024-01-01</span>
+        </div>
+        <div class="detail-row">
+            <label>Charity Action:</label>
+            <span th:text="${donation.charityActionName}">Action Name</span>
+        </div>
+        <div class="detail-row">
+            <label>Organization:</label>
+            <span th:text="${donation.organizationName}">Org Name</span>
+        </div>
+    </div>
+    <div class="actions">
+        <a class="btn" th:href="@{/admin/donations}">Back to List</a>
+        <form th:action="@{'/admin/donations/delete/' + ${donation.id}}" method="post" style="display: inline;">
+            <button type="submit" class="btn btn-delete" onclick="return confirm('Are you sure you want to delete this donation?');">Delete</button>
+        </form>
+    </div>
+</div>
+</body>
+</html> 

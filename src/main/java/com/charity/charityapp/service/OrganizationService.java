@@ -77,5 +77,15 @@ public class OrganizationService {
         }
         repo.deleteById(id);
     }
+
+    @Transactional(readOnly = true)
+    public long count() {
+        return repo.count();
+    }
+
+    @Transactional(readOnly = true)
+    public long countByStatus(String status) {
+        return repo.countByStatus(OrganizationStatus.valueOf(status));
+    }
 }
 

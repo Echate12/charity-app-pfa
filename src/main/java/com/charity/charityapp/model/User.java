@@ -9,20 +9,28 @@ import java.util.Set;
 import java.util.HashSet;
 
 @Entity
-@Getter @Setter
+@Getter
+@Setter
 public class User {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String firstName;
-    private String lastName;
+    @Column(unique = true)
+    private String username;
+
+    @Column(unique = true)
     private String email;
+
     private String password;
 
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    // ← NEW: track which actions this user follows
+    private String firstName;
+    private String lastName;
+
+
     @ManyToMany
     @JoinTable(
             name = "user_action_follows",

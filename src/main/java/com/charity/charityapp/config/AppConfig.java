@@ -14,7 +14,7 @@ public class AppConfig {
     public ModelMapper modelMapper() {
         ModelMapper mapper = new ModelMapper();
         mapper.getConfiguration()
-                .setMatchingStrategy(MatchingStrategies.STRICT) // safer, helps DTO→entity
+                .setMatchingStrategy(MatchingStrategies.STRICT) //  helps DTO→entity
                 .setSkipNullEnabled(true)
                 .setAmbiguityIgnored(true);
         return mapper;

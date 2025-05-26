@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Organization</title>
+    <link rel="stylesheet" th:href="@{/css/admin.css}" />
+</head>
+<body>
+<div th:replace="fragments/admin-nav :: adminMenu"></div>
+
+<div class="container">
+    <h2>Edit Organization</h2>
+    <form th:action="@{'/admin/organizations/edit/' + ${organization.id}}" th:object="${organization}" method="post" class="admin-form">
+        <div class="form-group">
+            <label for="name">Name</label>
+            <input type="text" id="name" th:field="*{name}" required />
+        </div>
+        
+        <div class="form-group">
+            <label for="contactEmail">Contact Email</label>
+            <input type="email" id="contactEmail" th:field="*{contactEmail}" required />
+        </div>
+        
+        <div class="form-group">
+            <label for="address">Address</label>
+            <textarea id="address" th:field="*{address}" rows="3" required></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="status">Status</label>
+            <select id="status" th:field="*{status}" required>
+                <option th:each="status : ${T(com.charity.charityapp.enums.OrganizationStatus).values()}"
+                        th:value="${status}"
+                        th:selected="${status == organization.status}"
+                        th:text="${status}">PENDING</option>
+            </select>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Update Organization</button>
+            <a th:href="@{/admin/organizations}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+</body>
+</html>

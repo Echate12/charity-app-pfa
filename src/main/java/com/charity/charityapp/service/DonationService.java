@@ -8,6 +8,8 @@ import com.charity.charityapp.repository.CharityActionRepository;
 import com.charity.charityapp.repository.DonationRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,30 +22,43 @@ import java.util.stream.Collectors;
 @Transactional
 public class DonationService {
 
-    private final DonationRepository repo;
+    private final DonationRepository donationRepo;
     private final CharityActionRepository actionRepo;
     private final ModelMapper mapper;
 
+    /**
+     * List all donations without pagination.
+     */
     @Transactional(readOnly = true)
     public List<DonationDto> getAll() {
-        return repo.findAll().stream()
-                .map(d -> mapper.map(d, DonationDto.class))
+        return donationRepo.findAll().stream()
+                .map(this::mapToDto)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * List donations with pagination.
+     */
+    @Transactional(readOnly = true)
+    public Page<DonationDto> getAll(Pageable pageable) {
+        return donationRepo.findAll(pageable)
+                .map(this::mapToDto);
     }
 
     @Transactional(readOnly = true)
     public DonationDto getById(Long id) {
-        Donation donation = repo.findById(id)
+        Donation donation = donationRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Donation not found"));
-        return mapper.map(donation, DonationDto.class);
+        return mapToDto(donation);
     }
 
     @Transactional(readOnly = true)
     public List<DonationDto> getByAction(Long actionId) {
-        return repo.findByCharityAction_Id(actionId).stream()
-                .map(d -> mapper.map(d, DonationDto.class))
+        return donationRepo.findByCharityAction_Id(actionId).stream()
+                .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
+
 
     public DonationDto create(DonationDto dto) {
         CharityAction action = actionRepo.findById(dto.getCharityActionId())
@@ -53,14 +68,14 @@ public class DonationService {
         if (donation.getDonatedAt() == null) {
             donation.setDonatedAt(LocalDateTime.now());
         }
-        Donation saved = repo.save(donation);
+        Donation saved = donationRepo.save(donation);
         action.setCollectedAmount(action.getCollectedAmount().add(saved.getAmount()));
         actionRepo.save(action);
-        return mapper.map(saved, DonationDto.class);
+        return mapToDto(saved);
     }
 
     public DonationDto update(Long id, DonationDto dto) {
-        Donation existing = repo.findById(id)
+        Donation existing = donationRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Donation not found"));
         if (!existing.getCharityAction().getId().equals(dto.getCharityActionId())) {
             CharityAction action = actionRepo.findById(dto.getCharityActionId())
@@ -68,21 +83,28 @@ public class DonationService {
             existing.setCharityAction(action);
         }
         existing.setAmount(dto.getAmount());
-        Donation updated = repo.save(existing);
-        return mapper.map(updated, DonationDto.class);
+        Donation updated = donationRepo.save(existing);
+        return mapToDto(updated);
     }
 
     public void delete(Long id) {
-        if (!repo.existsById(id)) {
+        if (!donationRepo.existsById(id)) {
             throw new ResourceNotFoundException("Donation not found");
         }
-        repo.deleteById(id);
+        donationRepo.deleteById(id);
     }
 
-    @Transactional(readOnly = true)
     public long countAll() {
-        return repo.count();
+        return donationRepo.count();
+    }
+
+    private DonationDto mapToDto(Donation donation) {
+        DonationDto dto = mapper.map(donation, DonationDto.class);
+        dto.setDonorEmail(donation.getDonorEmail());
+        dto.setDonatedAt(donation.getDonatedAt());
+        dto.setCharityActionId(donation.getCharityAction().getId());
+        dto.setCharityActionName(donation.getCharityAction().getTitle());
+        dto.setOrganizationName(donation.getCharityAction().getOrganization().getName());
+        return dto;
     }
 }
-
-

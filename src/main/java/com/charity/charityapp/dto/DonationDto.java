@@ -17,13 +17,17 @@ public class DonationDto {
     private String donorEmail;
     private LocalDateTime donatedAt;
     private Long charityActionId;
-
-    // Additional fields for better display
     private String charityActionName;
     private String organizationName;
+
+
+    private UserDto donor;
+    private CharityActionDto charityAction;
+    private LocalDateTime createdAt;
+
+
     private String status;
     private Long actionId;
 
-    /** The amount (in USD) to donate */
 
 }

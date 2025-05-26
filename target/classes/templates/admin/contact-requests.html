@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Gestion des demandes</title>
+
+    <!-- design system : Inter + main.css -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/main.css}"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- --- header / nav --- -->
+    <header class="flex" style="justify-content:space-between;margin-bottom:2rem;">
+        <h1>Gestion des demandes</h1>
+        <div class="flex" style="gap:.75rem">
+            <a th:href="@{/admin/dashboard}" class="btn btn-secondary">Tableau de bord</a>
+            <a th:href="@{/admin/contact/requests}" class="btn"
+               th:classappend="${requestUri == '/admin/contact/requests' ? 'active' : ''}">
+                Toutes
+            </a>
+            <a th:href="@{/admin/contact/requests/pending}" class="btn"
+               th:classappend="${requestUri == '/admin/contact/requests/pending' ? 'active' : ''}">
+                En attente
+            </a>
+            <form th:action="@{/auth/logout}" method="post">
+                <button class="btn btn-logout" type="submit"><i class="fas fa-sign-out"></i></button>
+            </form>
+        </div>
+    </header>
+
+    <!-- flash alerts -->
+    <div th:if="${param.approved}"  class="alert alert-success">Demande approuvée.</div>
+    <div th:if="${param.rejected}"  class="alert alert-error">Demande rejetée.</div>
+
+    <!-- aucune donnée -->
+    <div th:if="${#lists.isEmpty(requests)}" class="no-data">Aucune demande trouvée.</div>
+
+    <!-- liste cartes -->
+    <div class="grid-2" th:each="req : ${requests}">
+
+        <div class="card">
+
+            <!-- titre + statut -->
+            <div class="flex" style="justify-content:space-between;">
+                <h3 th:text="${req.title ?: 'Sans titre'}">Titre</h3>
+                <span class="status-badge"
+                      th:classappend="${req.status?.name()?.toLowerCase()}"
+                      th:text="${req.status?.name()}">PENDING</span>
+            </div>
+
+            <p class="type-badge" th:text="${req.type?.name()}">ORGANIZATION</p>
+            <p th:text="${req.description}">Description…</p>
+
+            <!-- adresse uniquement pour Organisation -->
+            <p th:if="${req.type?.name() == 'ORGANIZATION'}">
+                <strong>Adresse :</strong> <span th:text="${req.address}">—</span>
+            </p>
+
+            <!-- info utilisateur -->
+            <p><strong>Auteur :</strong> <span th:text="${req.userName}">user</span></p>
+            <p><strong>Email :</strong> <span th:text="${req.contactEmail}">mail</span></p>
+
+            <!-- boutons (si PENDING) -->
+            <div class="flex" style="gap:.75rem;margin-top:1rem;"
+                 th:if="${req.status?.name() == 'PENDING'}">
+                <form th:action="@{/admin/contact/requests/{id}/approve(id=${req.id})}" method="post">
+                    <button class="btn btn-success" type="submit"><i class="fas fa-check"></i> Approuver</button>
+                </form>
+                <form th:action="@{/admin/contact/requests/{id}/reject(id=${req.id})}" method="post">
+                    <button class="btn btn-danger" type="submit"><i class="fas fa-times"></i> Rejeter</button>
+                </form>
+            </div>
+
+            <!-- réponse admin -->
+            <div th:if="${req.adminResponse}">
+                <p><strong>Réponse :</strong></p>
+                <p th:text="${req.adminResponse}">—</p>
+            </div>
+
+        </div><!-- /card -->
+
+    </div><!-- /grid-2 -->
+
+</div><!-- /container -->
+</body>
+</html>

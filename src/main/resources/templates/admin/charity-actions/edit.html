@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Edit Charity Action</title></head>
+<body>
+<div th:replace="fragments/admin-nav :: adminMenu"></div>
+<div class="container">
+    <h2>Edit Action</h2>
+    <form th:action="@{'/admin/charity-actions/edit/' + ${action.id}}" th:object="${action}" method="post">
+        <div>
+            <label for="title">Title</label>
+            <input id="title" th:field="*{title}" type="text" required />
+        </div>
+        <div>
+            <label for="description">Description</label>
+            <textarea id="description" th:field="*{description}" rows="5"></textarea>
+        </div>
+        <div>
+            <label for="category">Category</label>
+            <select id="category" th:field="*{category}">
+                <option th:each="cat : ${T(com.charity.charityapp.enums.ActionCategory).values()}" th:selected="${cat} == ${action.category}" th:value="${cat}" th:text="${cat}"></option>
+            </select>
+        </div>
+        <button type="submit">Update</button>
+        <a th:href="@{/admin/charity-actions}">Cancel</a>
+    </form>
+</div>
+</body>
+</html>

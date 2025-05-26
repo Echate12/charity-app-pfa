@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Envoyer une demande</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
+</head>
+<body>
+<div class="container">
+    <header class="dashboard-header">
+        <h1>Nouvelle demande</h1>
+        <nav class="user-nav">
+            <a th:href="@{/user/dashboard}" class="btn">← Retour au tableau de bord</a>
+            <a th:href="@{/contact/my-requests}" class="btn">Voir mes demandes</a>
+            <form th:action="@{/auth/logout}" method="post" style="display:inline;">
+                <button type="submit" class="btn btn-logout">Déconnexion</button>
+            </form>
+        </nav>
+    </header>
+
+    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${sessionExpired}" class="alert alert-warning">
+        Votre session a expiré. Veuillez vous reconnecter.
+    </div>
+
+    <div class="contact-form-container">
+        <form th:action="@{/contact/submit}" th:object="${request}" method="post" class="contact-form" id="contactForm">
+            <div class="form-group">
+                <label for="type">Type de demande *</label>
+                <select id="type" th:field="*{type}" required>
+                    <option value="">Sélectionnez un type</option>
+                    <option th:each="t : ${T(com.charity.charityapp.enums.ContactRequestType).values()}"
+                            th:value="${t}"
+                            th:text="${t == T(com.charity.charityapp.enums.ContactRequestType).ORGANIZATION ? 'Ajouter une organisation' : 'Ajouter une action de charité'}">
+                    </option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="title">Titre *</label>
+                <input type="text" id="title" placeholder="Titre de votre demande"
+                       th:field="*{title}" required minlength="3" maxlength="100"/>
+                <small class="form-text">Entre 3 et 100 caractères</small>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description *</label>
+                <textarea id="description" rows="5" placeholder="Décrivez votre demande"
+                          th:field="*{description}" required minlength="10" maxlength="1000"></textarea>
+                <small class="form-text">Entre 10 et 1000 caractères</small>
+            </div>
+
+            <div class="form-group">
+                <label for="contactEmail">Email *</label>
+                <input type="email" id="contactEmail" placeholder="Votre email"
+                       th:field="*{contactEmail}" required/>
+            </div>
+
+            <div class="form-group">
+                <label for="contactPhone">Téléphone *</label>
+                <input type="tel" id="contactPhone" placeholder="Votre numéro"
+                       th:field="*{contactPhone}" required pattern="[0-9]{10}"/>
+                <small class="form-text">Format: 10 chiffres (ex: 0612345678)</small>
+            </div>
+
+            <div class="form-group organization-field" style="display: none;">
+                <label for="address">Adresse de l'organisation *</label>
+                <input type="text" id="address" placeholder="Adresse complète"
+                       th:field="*{address}"/>
+                <small class="form-text">Obligatoire pour les demandes d'organisation</small>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-paper-plane"></i> Soumettre la demande
+                </button>
+                <a th:href="@{/contact/my-requests}" class="btn btn-secondary">
+                    <i class="fas fa-list"></i> Voir mes demandes
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script th:inline="javascript">
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('contactForm');
+    const typeSelect = document.getElementById('type');
+    const addressField = document.querySelector('.organization-field');
+    const addressInput = document.getElementById('address');
+
+    // Show/hide address field based on request type
+    typeSelect.addEventListener('change', function() {
+        const isOrganization = this.value === 'ORGANIZATION';
+        addressField.style.display = isOrganization ? 'block' : 'none';
+        addressInput.required = isOrganization;
+    });
+
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        let errorMessage = '';
+
+        // Check required fields
+        const requiredFields = form.querySelectorAll('[required]');
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                isValid = false;
+                errorMessage = 'Veuillez remplir tous les champs obligatoires.';
+                field.classList.add('error');
+            } else {
+                field.classList.remove('error');
+            }
+        });
+
+        // Validate phone number
+        const phone = document.getElementById('contactPhone');
+        if (phone.value && !/^[0-9]{10}$/.test(phone.value)) {
+            isValid = false;
+            errorMessage = 'Le numéro de téléphone doit contenir 10 chiffres.';
+            phone.classList.add('error');
+        }
+
+        // Validate email
+        const email = document.getElementById('contactEmail');
+        if (email.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
+            isValid = false;
+            errorMessage = 'Veuillez entrer une adresse email valide.';
+            email.classList.add('error');
+        }
+
+        // Validate title length
+        const title = document.getElementById('title');
+        if (title.value && (title.value.length < 3 || title.value.length > 100)) {
+            isValid = false;
+            errorMessage = 'Le titre doit contenir entre 3 et 100 caractères.';
+            title.classList.add('error');
+        }
+
+        // Validate description length
+        const description = document.getElementById('description');
+        if (description.value && (description.value.length < 10 || description.value.length > 1000)) {
+            isValid = false;
+            errorMessage = 'La description doit contenir entre 10 et 1000 caractères.';
+            description.classList.add('error');
+        }
+
+        if (!isValid) {
+            e.preventDefault();
+            alert(errorMessage);
+        }
+    });
+
+    // Remove error class on input
+    form.querySelectorAll('input, textarea, select').forEach(field => {
+        field.addEventListener('input', function() {
+            this.classList.remove('error');
+        });
+    });
+});
+</script>
+</body>
+</html>

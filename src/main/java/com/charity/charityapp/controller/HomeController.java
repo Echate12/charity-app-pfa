@@ -1,5 +1,6 @@
 package com.charity.charityapp.controller;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
@@ -7,9 +8,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class HomeController {
 
     @GetMapping("/")
-    public String rootRedirect() {
-        // if you wanted to detect already‐logged‐in users you could inject Authentication here,
-        // but most apps just send everyone to the login form:
+    public String home(Authentication authentication) {
+        if (authentication != null && authentication.isAuthenticated()) {
+            // If user is authenticated, redirect based on role
+            boolean isAdmin = authentication.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            return "redirect:" + (isAdmin ? "/admin/dashboard" : "/dashboard");
+        }
+        // If not authenticated, redirect to login
         return "redirect:/auth/login";
     }
-}
+} 

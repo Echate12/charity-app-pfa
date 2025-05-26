@@ -2,75 +2,78 @@
 package com.charity.charityapp.config;
 
 import com.charity.charityapp.service.CustomUserDetailsService;
-import org.springframework.context.annotation.*;
-import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.annotation.method.configuration.*;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(prePostEnabled = true)
+@EnableMethodSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final CustomUserDetailsService userDetailsService;
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .authorizeHttpRequests(auth -> auth
+                // Public endpoints
+                .requestMatchers("/", "/css/**", "/js/**", "/images/**").permitAll()
+                .requestMatchers("/auth/register", "/auth/user-login", "/auth/admin-login").permitAll()
+                
+                // User endpoints
+                .requestMatchers("/dashboard/**", "/contact/**").hasRole("USER")
+                
+                // Admin endpoints
+                .requestMatchers("/admin/**").hasRole("ADMIN")
+                
+                // All other requests need authentication
+                .anyRequest().authenticated()
+            )
+            .formLogin(form -> form
+                .loginPage("/auth/user-login")
+                .loginProcessingUrl("/auth/user-login")
+                .successHandler(new AuthenticationSuccessHandler() {
+                    @Override
+                    public void onAuthenticationSuccess(HttpServletRequest request, 
+                                                      HttpServletResponse response,
+                                                      Authentication authentication) throws IOException, ServletException {
+                        if (authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
+                            response.sendRedirect("/admin/dashboard");
+                        } else {
+                            response.sendRedirect("/dashboard");
+                        }
+                    }
+                })
+                .failureUrl("/auth/user-login?error=true")
+                .permitAll()
+            )
+            .logout(logout -> logout
+                .logoutUrl("/auth/logout")
+                .logoutSuccessUrl("/auth/user-login")
+                .permitAll()
+            );
+
+        return http.build();
+    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
-    }
-
-    @Bean
-    public DaoAuthenticationProvider authenticationProvider(CustomUserDetailsService userDetailsService) {
-        DaoAuthenticationProvider prov = new DaoAuthenticationProvider();
-        prov.setUserDetailsService(userDetailsService);
-        prov.setPasswordEncoder(passwordEncoder());
-        return prov;
-    }
-
-    @Bean
-    public AuthenticationSuccessHandler myAuthSuccessHandler() {
-        return (request, response, auth) -> {
-            boolean isAdmin = auth.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-            String target = isAdmin ? "/admin/dashboard" : "/dashboard";
-            response.sendRedirect(request.getContextPath() + target);
-        };
-    }
-
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http,
-                                           DaoAuthenticationProvider authProvider) throws Exception {
-        http
-                .authenticationProvider(authProvider)
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.GET,
-                                "/", "/auth/login", "/auth/register", "/error",
-                                "/css/**", "/js/**", "/images/**"
-                        ).permitAll()
-                        .requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated()
-                )
-                .formLogin(form -> form
-                        .loginPage("/auth/login")
-                        .loginProcessingUrl("/auth/login")
-                        .usernameParameter("username")
-                        .passwordParameter("password")
-                        .successHandler(myAuthSuccessHandler())
-                        .failureUrl("/auth/login?error=true")
-                        .permitAll()
-                )
-                .logout(logout -> logout
-                        .logoutUrl("/auth/logout")
-                        .logoutSuccessUrl("/auth/login?logout=true")
-                        .invalidateHttpSession(true)
-                        .deleteCookies("JSESSIONID")
-                        .permitAll()
-                );
-        return http.build();
     }
 }

@@ -1,92 +1,155 @@
-// src/main/java/com/charity/charityapp/service/CharityActionService.java
 package com.charity.charityapp.service;
 
 import com.charity.charityapp.dto.CharityActionDto;
+import com.charity.charityapp.enums.ActionCategory;
 import com.charity.charityapp.exceptions.ResourceNotFoundException;
 import com.charity.charityapp.model.CharityAction;
-import com.charity.charityapp.model.User;
+import com.charity.charityapp.model.Organization;
 import com.charity.charityapp.repository.CharityActionRepository;
 import com.charity.charityapp.repository.OrganizationRepository;
-import com.charity.charityapp.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Service class for managing CharityAction operations for both admin and users.
+ */
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class CharityActionService {
+    private static final Logger log = LoggerFactory.getLogger(CharityActionService.class);
 
-    private final CharityActionRepository repo;
-    private final OrganizationRepository orgRepo;
-    private final UserRepository userRepo;
-    private final ModelMapper mapper;
+    private final CharityActionRepository actionRepo;
+    private final OrganizationRepository organizationRepo;
+    private final ModelMapper modelMapper;
 
-    @Transactional(readOnly = true)
-    public List<CharityActionDto> getAll() {
-        return repo.findAll().stream()
-                .map(a -> mapper.map(a, CharityActionDto.class))
+    // ----- Admin methods -----
+
+    /**
+     * List all charity actions with pagination (for admin).
+     */
+    public List<CharityActionDto> getAll(Pageable pageable) {
+        log.info("Fetching all charity actions with pagination: {}", pageable);
+        return actionRepo.findAll(pageable).stream()
+                .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
+    /**
+     * Get a charity action by ID (for admin).
+     */
     public CharityActionDto getById(Long id) {
-        CharityAction action = repo.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Action not found"));
-        return mapper.map(action, CharityActionDto.class);
+        CharityAction action = actionRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("CharityAction not found: " + id));
+        return mapToDto(action);
     }
 
+    /**
+     * Create a new charity action (for admin).
+     */
+    @Transactional
     public CharityActionDto create(CharityActionDto dto) {
-        CharityAction action = mapper.map(dto, CharityAction.class);
-        action.setOrganization(orgRepo.findById(dto.getOrganizationId())
-                .orElseThrow(() -> new ResourceNotFoundException("Organization not found")));
-        CharityAction saved = repo.save(action);
-        return mapper.map(saved, CharityActionDto.class);
+        CharityAction action = new CharityAction();
+        action.setTitle(dto.getTitle());
+        action.setDescription(dto.getDescription());
+        action.setCategory(dto.getCategory());
+        // link organization
+        Organization org = organizationRepo.findById(dto.getOrganizationId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Organization not found: " + dto.getOrganizationId()));
+        action.setOrganization(org);
+        action.setCollectedAmount(BigDecimal.ZERO);
+        action.setCreatedAt(LocalDateTime.now());
+        action.setUpdatedAt(LocalDateTime.now());
+
+        CharityAction saved = actionRepo.save(action);
+        return mapToDto(saved);
     }
 
+    /**
+     * Update an existing charity action (for admin).
+     */
+    @Transactional
     public CharityActionDto update(Long id, CharityActionDto dto) {
-        CharityAction existing = repo.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Action not found"));
-        mapper.map(dto, existing);
-        existing.setOrganization(orgRepo.findById(dto.getOrganizationId())
-                .orElseThrow(() -> new ResourceNotFoundException("Organization not found")));
-        CharityAction updated = repo.save(existing);
-        return mapper.map(updated, CharityActionDto.class);
-    }
-
-    public void delete(Long id) {
-        if (!repo.existsById(id)) {
-            throw new ResourceNotFoundException("Action not found");
+        CharityAction existing = actionRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("CharityAction not found: " + id));
+        modelMapper.map(dto, existing);
+        if (dto.getOrganizationId() != null) {
+            Organization org = organizationRepo.findById(dto.getOrganizationId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Organization not found: " + dto.getOrganizationId()));
+            existing.setOrganization(org);
         }
-        repo.deleteById(id);
+        existing.setUpdatedAt(LocalDateTime.now());
+        CharityAction updated = actionRepo.save(existing);
+        return mapToDto(updated);
     }
 
-    @Transactional(readOnly = true)
-    public List<CharityActionDto> search(String keyword) {
-        return repo.findByTitleContainingIgnoreCase(keyword).stream()
-                .map(a -> mapper.map(a, CharityActionDto.class))
+    /**
+     * Delete a charity action by ID (for admin).
+     */
+    public void delete(Long id) {
+        if (!actionRepo.existsById(id)) {
+            throw new ResourceNotFoundException("CharityAction not found: " + id);
+        }
+        actionRepo.deleteById(id);
+    }
+
+    /**
+     * Get all action categories.
+     */
+    public List<ActionCategory> getAllCategories() {
+        return Arrays.asList(ActionCategory.values());
+    }
+
+    // ----- User-facing methods -----
+
+    /**
+     * List all charity actions available to users.
+     */
+    public List<CharityActionDto> getAllForUser() {
+        log.info("Fetching all charity actions for user");
+        return actionRepo.findAll().stream()
+                .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
 
-    public void follow(Long actionId, String userEmail) {
-        User user = userRepo.findByEmail(userEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        CharityAction action = repo.findById(actionId)
-                .orElseThrow(() -> new ResourceNotFoundException("Action not found"));
-        user.getFollowedActions().add(action);
-        userRepo.save(user);
+    /**
+     * Search charity actions by title for users.
+     */
+    public List<CharityActionDto> searchForUser(String keyword) {
+        log.info("Searching charity actions for user with keyword: {}", keyword);
+        return actionRepo.findByTitleContainingIgnoreCase(keyword).stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
-    public List<CharityActionDto> getTracked(String userEmail) {
-        User user = userRepo.findByEmail(userEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        return user.getFollowedActions().stream()
-                .map(a -> mapper.map(a, CharityActionDto.class))
-                .collect(Collectors.toList());
+    /**
+     * Get a specific charity action for users.
+     */
+    public CharityActionDto getByIdForUser(Long id) {
+        log.info("Fetching charity action for user with id: {}", id);
+        return getById(id);
+    }
+
+    // ----- Mapping helper -----
+
+    private CharityActionDto mapToDto(CharityAction action) {
+        CharityActionDto dto = modelMapper.map(action, CharityActionDto.class);
+        if (action.getOrganization() != null) {
+            dto.setOrganizationId(action.getOrganization().getId());
+            dto.setOrganizationName(action.getOrganization().getName());
+        }
+        return dto;
     }
 }

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>User Dashboard</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}" />
+</head>
+<body>
+<div class="container">
+    <header class="dashboard-header">
+        <h1>Welcome to Your Dashboard</h1>
+        <nav class="user-nav">
+            <a th:href="@{/contact}" class="btn btn-primary">Faire une demande</a>
+            <a th:href="@{/contact/my-requests}" class="btn">Mes demandes</a>
+            <form th:action="@{/auth/logout}" method="post" style="display: inline;">
+                <button type="submit" class="btn btn-logout">Logout</button>
+            </form>
+        </nav>
+    </header>
+
+    <section class="dashboard-content">
+        <div class="dashboard-section">
+            <h2>Actions de charité récentes</h2>
+            <div class="card-grid">
+                <div th:each="action : ${actions}" class="card">
+                    <h3 th:text="${action.title}">Action Title</h3>
+                    <p th:text="${action.description}">Description</p>
+                    <div class="card-details">
+                        <span class="category" th:text="${action.category}">Category</span>
+                        <span class="amount">Montant collecté: $<span th:text="${action.collectedAmount}">0</span></span>
+                    </div>
+                    <div class="organization" th:text="${action.organizationName}">Organization Name</div>
+                </div>
+                <div th:if="${#lists.isEmpty(actions)}" class="no-data">
+                    Aucune action de charité disponible pour le moment.
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-section">
+            <h2>Organisations approuvées</h2>
+            <div class="card-grid">
+                <div th:each="org : ${organizations}" class="card">
+                    <h3 th:text="${org.name}">Organization Name</h3>
+                    <p th:text="${org.description}">Description</p>
+                    <div class="card-details">
+                        <span class="email" th:text="${org.contactEmail}">Email</span>
+                    </div>
+                    <div class="address" th:text="${org.address}">Address</div>
+                </div>
+                <div th:if="${#lists.isEmpty(organizations)}" class="no-data">
+                    Aucune organisation approuvée disponible pour le moment.
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+</body>
+</html>

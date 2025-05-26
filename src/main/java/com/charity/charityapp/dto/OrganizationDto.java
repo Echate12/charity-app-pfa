@@ -1,5 +1,6 @@
 package com.charity.charityapp.dto;
 
+import com.charity.charityapp.enums.OrganizationStatus;
 import lombok.*;
 
 @Data
@@ -13,5 +14,5 @@ public class OrganizationDto {
     private String name;
     private String contactEmail;
     private String address;
-    private String status;
+    private OrganizationStatus status;
 }

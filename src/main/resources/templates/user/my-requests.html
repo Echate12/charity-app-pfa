@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Mes demandes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body>
+<div class="container">
+
+    <h1>Mes demandes</h1>
+
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}"   class="alert alert-error"   th:text="${error}"></div>
+
+    <div th:if="${#lists.isEmpty(requests)}" class="no-data">
+        Vous n’avez pas encore soumis de demande.
+    </div>
+
+    <div class="grid-2" th:each="req : ${requests}">
+
+        <div class="card">
+            <div class="flex" style="justify-content:space-between;">
+                <h3 th:text="${req.title ?: 'Sans titre'}">Titre</h3>
+                <span class="status-badge"
+                      th:classappend="${req.status?.name()?.toLowerCase()}"
+                      th:text="${req.status?.name()}">PENDING</span>
+            </div>
+
+            <p class="type-badge" th:text="${req.type?.name()}">ORGANIZATION</p>
+            <p th:text="${req.description}">Description…</p>
+
+            <div th:if="${req.type?.name() == 'ORGANIZATION'}">
+                <p><strong>Adresse :</strong> <span th:text="${req.address}">—</span></p>
+            </div>
+
+            <div th:if="${req.adminResponse}">
+                <p><strong>Réponse admin :</strong></p>
+                <p th:text="${req.adminResponse}">—</p>
+            </div>
+
+            <p style="font-size:.85rem;color:#6B7280;margin-top:.75rem;">
+                Soumise le <span th:text="${#temporals.format(req.createdAt,'dd/MM/yyyy HH:mm')}">date</span>
+            </p>
+        </div>
+
+    </div>
+
+    <a th:href="@{/contact}" class="btn btn-secondary" style="margin-top:2rem;">Nouvelle demande</a>
+
+</div>
+</body>
+</html>

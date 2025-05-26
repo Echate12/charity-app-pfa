@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Login</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}" />
+</head>
+<body>
+<div class="auth-container">
+    <div class="auth-box">
+        <h1>Admin Login</h1>
+        
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+        <div th:if="${param.error}" class="alert alert-error">Invalid username or password.</div>
+        <div th:if="${param.logout}" class="alert alert-success">You have been logged out.</div>
+
+        <form th:action="@{/auth/admin-login}" method="post" class="auth-form">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required autofocus
+                       placeholder="Enter your username"/>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required
+                       placeholder="Enter your password"/>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">Login as Admin</button>
+        </form>
+
+        <div class="auth-links">
+            <p>Are you a regular user? <a th:href="@{/auth/user-login}">Login as user</a></p>
+        </div>
+    </div>
+</div>
+</body>
+</html> 

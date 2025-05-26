@@ -3,6 +3,7 @@ package com.charity.charityapp.dto;
 import com.charity.charityapp.enums.ActionCategory;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -16,8 +17,9 @@ public class CharityActionDto {
     private ActionCategory category;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private BigDecimal collectedAmount;
 
-    // link back to the owning organization
+
     private Long organizationId;
     private String organizationName;
 }

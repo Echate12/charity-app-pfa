@@ -25,5 +25,5 @@ public class Organization {
     @OneToMany(mappedBy = "organization", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CharityAction> actions = new ArrayList<>();
 
-    // getters & setters
+
 }
